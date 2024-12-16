@@ -4,6 +4,18 @@ import { BikeRoute } from "@/types/routes";
 import { getCommentsCount } from "@/components/RouteComments";
 import 'leaflet/dist/leaflet.css';
 
+// Define an array of colors for routes
+const routeColors = [
+  '#9b87f5', // Primary Purple
+  '#0EA5E9', // Ocean Blue
+  '#F97316', // Bright Orange
+  '#D946EF', // Magenta Pink
+  '#8B5CF6', // Vivid Purple
+  '#33C3F0', // Sky Blue
+  '#1EAEDB', // Bright Blue
+  '#0FA0CE', // Bright Blue
+];
+
 interface MapComponentProps {
   routes: BikeRoute[];
   selectedRoute: BikeRoute | null;
@@ -90,12 +102,14 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
           className="map-tiles"
         />
         <RouteDrawer isDrawing={isDrawing} onRouteComplete={onRouteComplete} />
-        {routes.map((route) => (
+        {routes.map((route, index) => (
           <Polyline
             key={route.id}
             positions={route.coordinates}
             pathOptions={{
-              color: selectedRoute?.id === route.id ? "#33C3F0" : "#0EA5E9",
+              color: selectedRoute?.id === route.id 
+                ? "#33C3F0" 
+                : routeColors[index % routeColors.length],
               weight: 4,
               opacity: 1,
               dashArray: [15, 10],
