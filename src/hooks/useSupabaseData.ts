@@ -25,6 +25,11 @@ export const useSupabaseData = () => {
   const addRoute = useMutation({
     mutationFn: async (route: Omit<BikeRoute, 'id' | 'likes' | 'dislikes'>) => {
       console.log('Adding new route to Supabase:', route);
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error('User must be authenticated to add a route');
+      }
+
       const { data, error } = await supabase
         .from('routes')
         .insert([{ 
@@ -33,7 +38,7 @@ export const useSupabaseData = () => {
           coordinates: route.coordinates,
           likes: 0, 
           dislikes: 0,
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          user_id: userData.user.id
         }])
         .select()
         .single();
@@ -70,7 +75,6 @@ export const useSupabaseData = () => {
     },
   });
 
-  // Delete route
   const deleteRoute = useMutation({
     mutationFn: async (routeId: string) => {
       console.log('Deleting route from Supabase:', routeId);
@@ -122,11 +126,18 @@ export const useSupabaseData = () => {
   const voteOnRoute = useMutation({
     mutationFn: async ({ routeId, isLike }: { routeId: string; isLike: boolean }) => {
       console.log('Voting on route:', { routeId, isLike });
+      
+      // First get the current user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error('User must be authenticated to vote');
+      }
+
       const { data: existingVote, error: fetchError } = await supabase
         .from('votes')
         .select()
         .eq('route_id', routeId)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('user_id', userData.user.id)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -150,7 +161,7 @@ export const useSupabaseData = () => {
         .from('votes')
         .insert([{
           route_id: routeId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: userData.user.id,
           is_like: isLike,
         }]);
 
