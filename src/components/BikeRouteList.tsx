@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Edit, Trash2 } from "lucide-react";
 
 interface BikeRoute {
   id: string;
@@ -15,9 +15,20 @@ interface BikeRouteListProps {
   selectedRoute: BikeRoute | null;
   onRouteSelect: (route: BikeRoute) => void;
   onVote: (routeId: string, isLike: boolean) => void;
+  isOperator?: boolean;
+  onEdit?: (route: BikeRoute) => void;
+  onDelete?: (routeId: string) => void;
 }
 
-const BikeRouteList = ({ routes, selectedRoute, onRouteSelect, onVote }: BikeRouteListProps) => {
+const BikeRouteList = ({ 
+  routes, 
+  selectedRoute, 
+  onRouteSelect, 
+  onVote,
+  isOperator,
+  onEdit,
+  onDelete 
+}: BikeRouteListProps) => {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold text-gray-900">Proposed Routes</h2>
@@ -56,6 +67,30 @@ const BikeRouteList = ({ routes, selectedRoute, onRouteSelect, onVote }: BikeRou
                 {route.dislikes}
               </Button>
             </div>
+            {isOperator && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.(route);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(route.id);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
       ))}
