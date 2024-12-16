@@ -1,14 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import BikeRouteList from "@/components/BikeRouteList";
 import RouteComments from "@/components/RouteComments";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MapComponent } from "@/components/MapComponent";
+import RouteDialog from "@/components/RouteDialog";
+import RouteControls from "@/components/RouteControls";
 import { BikeRoute } from "@/types/routes";
 import { supabase } from "@/lib/supabase";
 import "leaflet/dist/leaflet.css";
@@ -83,7 +81,6 @@ const Index = () => {
 
   const handleSaveRoute = () => {
     if (editingRoute) {
-      // Update existing route
       setRoutes(prevRoutes =>
         prevRoutes.map(route =>
           route.id === editingRoute.id
@@ -101,7 +98,6 @@ const Index = () => {
         description: "The bike route has been successfully updated.",
       });
     } else {
-      // Create new route
       const newRoute: BikeRoute = {
         id: Date.now().toString(),
         coordinates: tempCoordinates,
@@ -146,12 +142,21 @@ const Index = () => {
     setTempCoordinates([]);
   };
 
+  const handleStartDrawing = () => {
+    setIsDrawing(true);
+    setSelectedRoute(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
+            <RouteControls 
+              isOperator={isOperator}
+              onStartDrawing={handleStartDrawing}
+            />
             <MapComponent
               routes={routes}
               selectedRoute={selectedRoute}
@@ -177,45 +182,17 @@ const Index = () => {
       </div>
       <Footer />
 
-      <Dialog open={showRouteDialog} onOpenChange={setShowRouteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingRoute ? 'Edit Route' : 'New Route'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="routeName" className="text-sm font-medium">
-                Route Name
-              </label>
-              <Input
-                id="routeName"
-                value={newRouteName}
-                onChange={(e) => setNewRouteName(e.target.value)}
-                placeholder="Enter route name"
-              />
-            </div>
-            <div>
-              <label htmlFor="routeDescription" className="text-sm font-medium">
-                Description
-              </label>
-              <Textarea
-                id="routeDescription"
-                value={newRouteDescription}
-                onChange={(e) => setNewRouteDescription(e.target.value)}
-                placeholder="Enter route description"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveRoute} disabled={!newRouteName}>
-              {editingRoute ? 'Update Route' : 'Create Route'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RouteDialog
+        open={showRouteDialog}
+        onOpenChange={setShowRouteDialog}
+        editingRoute={editingRoute}
+        newRouteName={newRouteName}
+        newRouteDescription={newRouteDescription}
+        onNameChange={setNewRouteName}
+        onDescriptionChange={setNewRouteDescription}
+        onSave={handleSaveRoute}
+        onClose={handleCloseDialog}
+      />
     </div>
   );
 };
