@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap, useMapEvents } from "react-leaflet";
 import { BikeRoute } from "@/types/routes";
 
@@ -60,10 +61,12 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
           <Polyline
             key={route.id}
             positions={route.coordinates}
-            dashArray={[10, 10]}
-            color={selectedRoute?.id === route.id ? "#2F5233" : "#4F7942"}
-            weight={4}
-            opacity={0.8}
+            pathOptions={{
+              color: selectedRoute?.id === route.id ? "#2F5233" : "#4F7942",
+              weight: 4,
+              opacity: 0.8,
+              dashArray: [10, 10]
+            }}
           />
         ))}
       </MapContainer>
