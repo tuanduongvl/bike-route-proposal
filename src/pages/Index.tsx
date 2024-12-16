@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { MapContainer, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import BikeRouteList from "@/components/BikeRouteList";
 import RouteComments from "@/components/RouteComments";
-import { Loader } from "@googlemaps/js-api-loader";
 import "leaflet/dist/leaflet.css";
 
 interface BikeRoute {
@@ -30,41 +29,6 @@ const INITIAL_ROUTES: BikeRoute[] = [
     description: "New bike route connecting downtown to Central Park",
   },
 ];
-
-// Custom component to handle Google Maps integration
-const GoogleMapLayer = () => {
-  const map = useMap();
-
-  useEffect(() => {
-    const loader = new Loader({
-      apiKey: "", // Google Maps will work with an empty API key in development, with some limitations
-      version: "weekly",
-    });
-
-    loader.load().then(() => {
-      const googleMaps = window.google.maps;
-      const googleLayer = new googleMaps.Map(map.getContainer(), {
-        center: { lat: 51.505, lng: -0.09 },
-        zoom: 13,
-        disableDefaultUI: true,
-      });
-
-      // Sync Leaflet's view with Google Maps
-      map.on('move', () => {
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-        googleLayer.setCenter({ lat: center.lat, lng: center.lng });
-        googleLayer.setZoom(zoom);
-      });
-
-      // Add the Google Maps layer behind Leaflet's overlay pane
-      map.getContainer().firstChild.style.zIndex = '5';
-      map.getContainer().getElementsByClassName('leaflet-google-layer')[0].style.zIndex = '1';
-    });
-  }, [map]);
-
-  return null;
-};
 
 const Index = () => {
   const [routes, setRoutes] = useState<BikeRoute[]>(INITIAL_ROUTES);
@@ -112,7 +76,10 @@ const Index = () => {
                 zoom={13}
                 style={{ height: "100%", width: "100%" }}
               >
-                <GoogleMapLayer />
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
                 {routes.map((route) => (
                   <Polyline
                     key={route.id}
