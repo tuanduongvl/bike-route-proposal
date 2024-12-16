@@ -67,7 +67,7 @@ create table public.comments (
     id uuid default gen_random_uuid() primary key,
     route_id uuid references public.routes(id) on delete cascade,
     user_id uuid references auth.users(id),
-    content text not null,
+    text text not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
