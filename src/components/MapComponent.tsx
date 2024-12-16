@@ -46,6 +46,35 @@ const RouteDrawer = ({ isDrawing, onRouteComplete }: {
   ) : null;
 };
 
+const RouteTooltip = ({ route }: { route: BikeRoute }) => {
+  const [commentsCount, setCommentsCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchCommentsCount = async () => {
+      try {
+        const count = await getCommentsCount(route.id);
+        setCommentsCount(count);
+      } catch (error) {
+        console.error('Error fetching comments count:', error);
+      }
+    };
+
+    fetchCommentsCount();
+  }, [route.id]);
+
+  return (
+    <Tooltip sticky className="bg-white px-3 py-2 rounded shadow-lg border border-gray-200">
+      <div className="font-medium text-gray-900">{route.name}</div>
+      <div className="text-sm text-gray-600">
+        👍 {route.likes} &nbsp; 👎 {route.dislikes}
+      </div>
+      <div className="text-sm text-gray-600 mt-1">
+        💬 {commentsCount} comments
+      </div>
+    </Tooltip>
+  );
+};
+
 export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete }: MapComponentProps) => {
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: "600px" }}>
@@ -73,15 +102,7 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
               lineCap: 'round'
             }}
           >
-            <Tooltip sticky className="bg-white px-3 py-2 rounded shadow-lg border border-gray-200">
-              <div className="font-medium text-gray-900">{route.name}</div>
-              <div className="text-sm text-gray-600">
-                👍 {route.likes} &nbsp; 👎 {route.dislikes}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">
-                💬 {getCommentsCount(route.id)} comments
-              </div>
-            </Tooltip>
+            <RouteTooltip route={route} />
           </Polyline>
         ))}
       </MapContainer>
