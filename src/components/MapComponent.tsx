@@ -85,8 +85,8 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
         zoomControl={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>'
+          url="https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbHNxOXB2NmswMGxqMmpxdDZ5ZmZ1OTd0In0.qDwyGXxJW4UV7B6yigZIuA"
           className="map-tiles"
         />
         <RouteDrawer isDrawing={isDrawing} onRouteComplete={onRouteComplete} />
@@ -95,7 +95,7 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
             key={route.id}
             positions={route.coordinates}
             pathOptions={{
-              color: selectedRoute?.id === route.id ? "#2F5233" : "#4F7942",
+              color: selectedRoute?.id === route.id ? "#33C3F0" : "#0EA5E9",
               weight: 4,
               opacity: 1,
               dashArray: [15, 10],
