@@ -29,7 +29,14 @@ export const useSupabaseData = () => {
       console.log('Adding new route to Supabase:', route);
       const { data, error } = await supabase
         .from('routes')
-        .insert([{ ...route, likes: 0, dislikes: 0 }])
+        .insert([{ 
+          name: route.name,
+          description: route.description,
+          coordinates: route.coordinates,
+          likes: 0, 
+          dislikes: 0,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        }])
         .select()
         .single();
 
