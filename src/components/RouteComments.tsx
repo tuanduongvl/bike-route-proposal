@@ -4,11 +4,22 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { useComments } from "@/hooks/useComments";
+import { supabase } from "@/lib/supabase";
 
 interface RouteCommentsProps {
   routeId: string;
   routeName: string;
 }
+
+export const getCommentsCount = async (routeId: string): Promise<number> => {
+  const { count, error } = await supabase
+    .from('comments')
+    .select('*', { count: 'exact' })
+    .eq('route_id', routeId);
+
+  if (error) throw error;
+  return count || 0;
+};
 
 const RouteComments = ({ routeId, routeName }: RouteCommentsProps) => {
   const [newComment, setNewComment] = useState("");

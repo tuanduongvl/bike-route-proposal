@@ -132,6 +132,10 @@ const Index = () => {
     setIsDrawing(false);
   };
 
+  const handleRouteSelect = (route: BikeRoute) => {
+    setSelectedRoute(route);
+  };
+
   if (isLoadingRoutes) {
     return <div>Loading...</div>;
   }
@@ -159,7 +163,7 @@ const Index = () => {
             <BikeRouteList
               routes={routes}
               selectedRoute={selectedRoute}
-              onRouteSelect={setSelectedRoute}
+              onRouteSelect={handleRouteSelect}
               onVote={handleVote}
               isOperator={isOperator}
               onEdit={handleEditRoute}
