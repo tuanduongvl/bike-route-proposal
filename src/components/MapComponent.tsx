@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, useMap, useMapEvents, Tooltip } from "react-leaflet";
 import { BikeRoute } from "@/types/routes";
 import 'leaflet/dist/leaflet.css';
 
@@ -67,10 +67,18 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
             pathOptions={{
               color: selectedRoute?.id === route.id ? "#2F5233" : "#4F7942",
               weight: 4,
-              opacity: 0.8,
-              dashArray: [10, 10]
+              opacity: 1,
+              dashArray: [15, 10],
+              lineCap: 'round'
             }}
-          />
+          >
+            <Tooltip sticky className="bg-white px-3 py-2 rounded shadow-lg border border-gray-200">
+              <div className="font-medium text-gray-900">{route.name}</div>
+              <div className="text-sm text-gray-600">
+                👍 {route.likes} &nbsp; 👎 {route.dislikes}
+              </div>
+            </Tooltip>
+          </Polyline>
         ))}
       </MapContainer>
     </div>
