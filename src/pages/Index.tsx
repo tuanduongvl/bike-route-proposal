@@ -13,7 +13,7 @@ import "leaflet/dist/leaflet.css";
 
 const Index = () => {
   const [selectedRoute, setSelectedRoute] = useState<BikeRoute | null>(null);
-  const [isOperator, setIsOperator] = useState(false);
+  const [isOperator] = useState(true); // Changed this line to default to true
   const [isDrawing, setIsDrawing] = useState(false);
   const [showRouteDialog, setShowRouteDialog] = useState(false);
   const [editingRoute, setEditingRoute] = useState<BikeRoute | null>(null);
