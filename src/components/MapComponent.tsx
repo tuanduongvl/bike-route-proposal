@@ -20,18 +20,17 @@ const RouteDrawer = ({ isDrawing, onRouteComplete }: {
     click(e) {
       if (isDrawing) {
         const newPoint: [number, number] = [e.latlng.lat, e.latlng.lng];
-        const newPoints = [...points, newPoint];
-        setPoints(newPoints);
-        onRouteComplete(newPoints);
+        setPoints(prev => [...prev, newPoint]);
       }
     },
   });
 
   useEffect(() => {
-    if (!isDrawing) {
+    if (!isDrawing && points.length > 0) {
+      onRouteComplete(points);
       setPoints([]);
     }
-  }, [isDrawing]);
+  }, [isDrawing, points, onRouteComplete]);
 
   return points.length > 0 ? (
     <Polyline
