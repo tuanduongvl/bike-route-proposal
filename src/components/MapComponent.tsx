@@ -91,8 +91,8 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: "600px" }}>
       <MapContainer
-        center={[51.505, -0.09]}
-        zoom={13}
+        center={[37.5985, -122.3872]} // Millbrae, CA coordinates
+        zoom={14}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
       >
