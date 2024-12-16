@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,7 @@ interface Comment {
   id: string;
   text: string;
   timestamp: Date;
+  routeId: string;
 }
 
 interface RouteCommentsProps {
@@ -15,10 +16,19 @@ interface RouteCommentsProps {
   routeName: string;
 }
 
+// Create a global store for comments to simulate persistence
+const globalComments: Comment[] = [];
+
 const RouteComments = ({ routeId, routeName }: RouteCommentsProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const { toast } = useToast();
+
+  // Load route-specific comments
+  useEffect(() => {
+    const routeComments = globalComments.filter(comment => comment.routeId === routeId);
+    setComments(routeComments);
+  }, [routeId]);
 
   const handleSubmitComment = () => {
     if (!newComment.trim()) return;
@@ -27,9 +37,13 @@ const RouteComments = ({ routeId, routeName }: RouteCommentsProps) => {
       id: Date.now().toString(),
       text: newComment,
       timestamp: new Date(),
+      routeId: routeId
     };
 
-    setComments((prev) => [comment, ...prev]);
+    // Add to global store
+    globalComments.push(comment);
+    // Update local state
+    setComments(prev => [comment, ...prev]);
     setNewComment("");
     toast({
       title: "Comment added",
@@ -64,6 +78,11 @@ const RouteComments = ({ routeId, routeName }: RouteCommentsProps) => {
       </div>
     </div>
   );
+};
+
+// Export the function to get comments count for a specific route
+export const getCommentsCount = (routeId: string): number => {
+  return globalComments.filter(comment => comment.routeId === routeId).length;
 };
 
 export default RouteComments;

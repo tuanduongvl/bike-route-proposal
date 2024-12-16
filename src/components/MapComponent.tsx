@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap, useMapEvents, Tooltip } from "react-leaflet";
 import { BikeRoute } from "@/types/routes";
+import { getCommentsCount } from "@/components/RouteComments";
 import 'leaflet/dist/leaflet.css';
 
 interface MapComponentProps {
@@ -76,6 +77,9 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
               <div className="font-medium text-gray-900">{route.name}</div>
               <div className="text-sm text-gray-600">
                 👍 {route.likes} &nbsp; 👎 {route.dislikes}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                💬 {getCommentsCount(route.id)} comments
               </div>
             </Tooltip>
           </Polyline>
