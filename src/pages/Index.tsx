@@ -1,23 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Polyline, useMap, useMapEvents } from "react-leaflet";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import BikeRouteList from "@/components/BikeRouteList";
 import RouteComments from "@/components/RouteComments";
-import "leaflet/dist/leaflet.css";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Edit, Plus } from "lucide-react";
-
-interface BikeRoute {
-  id: string;
-  coordinates: [number, number][];
-  likes: number;
-  dislikes: number;
-  name: string;
-  description: string;
-}
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { MapComponent } from "@/components/MapComponent";
+import { BikeRoute } from "@/types/routes";
+import { supabase } from "@/lib/supabase";
+import "leaflet/dist/leaflet.css";
 
 const INITIAL_ROUTES: BikeRoute[] = [
   {
@@ -34,39 +28,6 @@ const INITIAL_ROUTES: BikeRoute[] = [
   },
 ];
 
-// Component to handle route drawing
-const RouteDrawer = ({ isDrawing, onRouteComplete }: { 
-  isDrawing: boolean; 
-  onRouteComplete: (coordinates: [number, number][]) => void 
-}) => {
-  const [points, setPoints] = useState<[number, number][]>([]);
-  const map = useMapEvents({
-    click(e) {
-      if (isDrawing) {
-        const newPoint: [number, number] = [e.latlng.lat, e.latlng.lng];
-        setPoints(prev => [...prev, newPoint]);
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (!isDrawing && points.length > 0) {
-      onRouteComplete(points);
-      setPoints([]);
-    }
-  }, [isDrawing, points, onRouteComplete]);
-
-  return points.length > 0 ? (
-    <Polyline
-      positions={points}
-      dashArray={[10, 10]}
-      color="#4F7942"
-      weight={4}
-      opacity={0.8}
-    />
-  ) : null;
-};
-
 const Index = () => {
   const [routes, setRoutes] = useState<BikeRoute[]>(INITIAL_ROUTES);
   const [selectedRoute, setSelectedRoute] = useState<BikeRoute | null>(null);
@@ -78,6 +39,22 @@ const Index = () => {
   const [newRouteDescription, setNewRouteDescription] = useState("");
   const [tempCoordinates, setTempCoordinates] = useState<[number, number][]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkOperator = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsOperator(!!session);
+    };
+    checkOperator();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsOperator(!!session);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleVote = (routeId: string, isLike: boolean) => {
     setRoutes((prevRoutes) =>
@@ -170,59 +147,18 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Bike Route Proposals</h1>
-          <div className="flex gap-4">
-            {isOperator && (
-              <Button
-                onClick={() => setIsDrawing(!isDrawing)}
-                variant={isDrawing ? "destructive" : "default"}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {isDrawing ? "Cancel Drawing" : "Draw New Route"}
-              </Button>
-            )}
-            <Button
-              onClick={() => setIsOperator(!isOperator)}
-              variant={isOperator ? "destructive" : "default"}
-            >
-              {isOperator ? "Exit Operator Mode" : "Enter Operator Mode"}
-            </Button>
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header />
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: "600px" }}>
-              <MapContainer
-                center={[51.505, -0.09]}
-                zoom={13}
-                style={{ height: "100%", width: "100%" }}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <RouteDrawer isDrawing={isDrawing} onRouteComplete={handleRouteComplete} />
-                {routes.map((route) => (
-                  <Polyline
-                    key={route.id}
-                    positions={route.coordinates}
-                    dashArray={[10, 10]}
-                    color={selectedRoute?.id === route.id ? "#2F5233" : "#4F7942"}
-                    weight={4}
-                    opacity={0.8}
-                    eventHandlers={{
-                      click: () => setSelectedRoute(route),
-                    }}
-                  />
-                ))}
-              </MapContainer>
-            </div>
+            <MapComponent
+              routes={routes}
+              selectedRoute={selectedRoute}
+              isDrawing={isDrawing}
+              onRouteComplete={handleRouteComplete}
+            />
           </div>
-
           <div className="space-y-8">
             <BikeRouteList
               routes={routes}
@@ -239,6 +175,7 @@ const Index = () => {
           </div>
         </div>
       </div>
+      <Footer />
 
       <Dialog open={showRouteDialog} onOpenChange={setShowRouteDialog}>
         <DialogContent>
