@@ -85,8 +85,8 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
         zoomControl={false}
       >
         <TileLayer
-          attribution='Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>'
-          url="https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbHNxOXB2NmswMGxqMmpxdDZ5ZmZ1OTd0In0.qDwyGXxJW4UV7B6yigZIuA"
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           className="map-tiles"
         />
         <RouteDrawer isDrawing={isDrawing} onRouteComplete={onRouteComplete} />
