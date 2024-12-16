@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import BikeRouteList from "@/components/BikeRouteList";
 import RouteComments from "@/components/RouteComments";
@@ -8,26 +8,10 @@ import { MapComponent } from "@/components/MapComponent";
 import RouteDialog from "@/components/RouteDialog";
 import RouteControls from "@/components/RouteControls";
 import { BikeRoute } from "@/types/routes";
-import { supabase } from "@/lib/supabase";
+import { useSupabaseData } from "@/hooks/useSupabaseData";
 import "leaflet/dist/leaflet.css";
 
-const INITIAL_ROUTES: BikeRoute[] = [
-  {
-    id: "1",
-    coordinates: [
-      [51.505, -0.09],
-      [51.51, -0.1],
-      [51.51, -0.12],
-    ],
-    likes: 5,
-    dislikes: 2,
-    name: "Central Park Connection",
-    description: "New bike route connecting downtown to Central Park",
-  },
-];
-
 const Index = () => {
-  const [routes, setRoutes] = useState<BikeRoute[]>(INITIAL_ROUTES);
   const [selectedRoute, setSelectedRoute] = useState<BikeRoute | null>(null);
   const [isOperator, setIsOperator] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -38,39 +22,29 @@ const Index = () => {
   const [tempCoordinates, setTempCoordinates] = useState<[number, number][]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkOperator = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsOperator(!!session);
-    };
-    checkOperator();
+  const {
+    routes,
+    isLoadingRoutes,
+    addRoute,
+    updateRoute,
+    deleteRoute,
+    voteOnRoute,
+  } = useSupabaseData();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsOperator(!!session);
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleVote = (routeId: string, isLike: boolean) => {
-    setRoutes((prevRoutes) =>
-      prevRoutes.map((route) => {
-        if (route.id === routeId) {
-          return {
-            ...route,
-            likes: isLike ? route.likes + 1 : route.likes,
-            dislikes: !isLike ? route.dislikes + 1 : route.dislikes,
-          };
-        }
-        return route;
-      })
-    );
-    toast({
-      title: "Vote recorded",
-      description: "Thank you for your feedback!",
-    });
+  const handleVote = async (routeId: string, isLike: boolean) => {
+    try {
+      await voteOnRoute.mutateAsync({ routeId, isLike });
+      toast({
+        title: "Vote recorded",
+        description: "Thank you for your feedback!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to record vote. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRouteComplete = useCallback((coordinates: [number, number][]) => {
@@ -79,51 +53,57 @@ const Index = () => {
     setIsDrawing(false);
   }, []);
 
-  const handleSaveRoute = () => {
-    if (editingRoute) {
-      setRoutes(prevRoutes =>
-        prevRoutes.map(route =>
-          route.id === editingRoute.id
-            ? {
-                ...route,
-                name: newRouteName,
-                description: newRouteDescription,
-                coordinates: tempCoordinates.length > 0 ? tempCoordinates : route.coordinates,
-              }
-            : route
-        )
-      );
+  const handleSaveRoute = async () => {
+    try {
+      if (editingRoute) {
+        await updateRoute.mutateAsync({
+          ...editingRoute,
+          name: newRouteName,
+          description: newRouteDescription,
+          coordinates: tempCoordinates.length > 0 ? tempCoordinates : editingRoute.coordinates,
+        });
+        toast({
+          title: "Route updated",
+          description: "The bike route has been successfully updated.",
+        });
+      } else {
+        await addRoute.mutateAsync({
+          name: newRouteName,
+          description: newRouteDescription,
+          coordinates: tempCoordinates,
+        });
+        toast({
+          title: "Route created",
+          description: "New bike route has been successfully created.",
+        });
+      }
+      handleCloseDialog();
+    } catch (error) {
       toast({
-        title: "Route updated",
-        description: "The bike route has been successfully updated.",
-      });
-    } else {
-      const newRoute: BikeRoute = {
-        id: Date.now().toString(),
-        coordinates: tempCoordinates,
-        likes: 0,
-        dislikes: 0,
-        name: newRouteName,
-        description: newRouteDescription,
-      };
-      setRoutes(prev => [...prev, newRoute]);
-      toast({
-        title: "Route created",
-        description: "New bike route has been successfully created.",
+        title: "Error",
+        description: "Failed to save route. Please try again.",
+        variant: "destructive",
       });
     }
-    handleCloseDialog();
   };
 
-  const handleDeleteRoute = (routeId: string) => {
-    setRoutes(prev => prev.filter(route => route.id !== routeId));
-    if (selectedRoute?.id === routeId) {
-      setSelectedRoute(null);
+  const handleDeleteRoute = async (routeId: string) => {
+    try {
+      await deleteRoute.mutateAsync(routeId);
+      if (selectedRoute?.id === routeId) {
+        setSelectedRoute(null);
+      }
+      toast({
+        title: "Route deleted",
+        description: "The bike route has been successfully deleted.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete route. Please try again.",
+        variant: "destructive",
+      });
     }
-    toast({
-      title: "Route deleted",
-      description: "The bike route has been successfully deleted.",
-    });
   };
 
   const handleEditRoute = (route: BikeRoute) => {
@@ -149,16 +129,12 @@ const Index = () => {
   };
 
   const handleFinishDrawing = () => {
-    if (isDrawing) {
-      setIsDrawing(false);
-    } else {
-      toast({
-        title: "No points drawn",
-        description: "Please draw at least one point before finishing.",
-        variant: "destructive"
-      });
-    }
+    setIsDrawing(false);
   };
+
+  if (isLoadingRoutes) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -190,7 +166,10 @@ const Index = () => {
               onDelete={handleDeleteRoute}
             />
             {selectedRoute && (
-              <RouteComments routeId={selectedRoute.id} routeName={selectedRoute.name} />
+              <RouteComments 
+                routeId={selectedRoute.id} 
+                routeName={selectedRoute.name} 
+              />
             )}
           </div>
         </div>

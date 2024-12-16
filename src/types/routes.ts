@@ -5,4 +5,6 @@ export interface BikeRoute {
   coordinates: [number, number][];
   likes: number;
   dislikes: number;
+  created_at?: string;
+  user_id?: string;
 }
