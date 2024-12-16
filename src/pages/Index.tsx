@@ -145,11 +145,12 @@ const Index = () => {
   const handleStartDrawing = () => {
     setIsDrawing(true);
     setSelectedRoute(null);
+    setTempCoordinates([]);
   };
 
   const handleFinishDrawing = () => {
-    if (tempCoordinates.length > 0) {
-      handleRouteComplete(tempCoordinates);
+    if (isDrawing) {
+      setIsDrawing(false);
     } else {
       toast({
         title: "No points drawn",
