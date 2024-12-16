@@ -4,11 +4,13 @@ import { useToast } from "./ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
+import { LoginForm } from "./LoginForm";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -23,42 +25,6 @@ export const Header = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
-  const handleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-
-      if (error) {
-        console.error('Auth error:', error);
-        
-        if (error.message.includes('provider is not enabled')) {
-          toast({
-            title: "Authentication Error",
-            description: "GitHub login is not enabled. Please contact the administrator to enable GitHub authentication in Supabase.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to login. Please try again.",
-            variant: "destructive"
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -82,10 +48,14 @@ export const Header = () => {
               <Button variant="outline" onClick={handleLogout}>Logout</Button>
             </div>
           ) : (
-            <Button onClick={handleLogin}>Login as Operator</Button>
+            <Button onClick={() => setShowLoginForm(true)}>Login as Operator</Button>
           )}
         </div>
       </div>
+      <LoginForm 
+        isOpen={showLoginForm} 
+        onClose={() => setShowLoginForm(false)} 
+      />
     </header>
   );
 };
