@@ -2,34 +2,51 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { BikeRoute } from '@/types/routes';
 
-export const useSupabaseData = () => {
+// Separate vote-related functionality
+const useVotes = () => {
   const queryClient = useQueryClient();
 
-  const { data: routes = [], isLoading: isLoadingRoutes } = useQuery({
-    queryKey: ['routes'],
-    queryFn: async () => {
-      console.log('Fetching routes from Supabase');
-      const { data, error } = await supabase
+  return useMutation({
+    mutationFn: async ({ routeId, isLike }: { routeId: string; isLike: boolean }) => {
+      console.log('Anonymous voting on route:', { routeId, isLike });
+      
+      // For anonymous voting, we'll just update the route's likes/dislikes directly
+      const { data: currentRoute } = await supabase
         .from('routes')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('likes, dislikes')
+        .eq('id', routeId)
+        .single();
 
-      if (error) {
-        console.error('Error fetching routes:', error);
-        throw error;
+      if (!currentRoute) {
+        throw new Error('Route not found');
       }
-      return data as BikeRoute[];
+
+      const { error: updateError } = await supabase
+        .from('routes')
+        .update({ 
+          likes: isLike ? (currentRoute.likes + 1) : currentRoute.likes,
+          dislikes: !isLike ? (currentRoute.dislikes + 1) : currentRoute.dislikes
+        })
+        .eq('id', routeId);
+
+      if (updateError) {
+        console.error('Error updating route votes:', updateError);
+        throw updateError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routes'] });
     },
   });
+};
+
+// Separate route management functionality
+const useRoutes = () => {
+  const queryClient = useQueryClient();
 
   const addRoute = useMutation({
     mutationFn: async (route: Omit<BikeRoute, 'id' | 'likes' | 'dislikes'>) => {
       console.log('Adding new route to Supabase:', route);
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        throw new Error('User must be authenticated to add a route');
-      }
-
       const { data, error } = await supabase
         .from('routes')
         .insert([{ 
@@ -37,8 +54,7 @@ export const useSupabaseData = () => {
           description: route.description,
           coordinates: route.coordinates,
           likes: 0, 
-          dislikes: 0,
-          user_id: userData.user.id
+          dislikes: 0
         }])
         .select()
         .single();
@@ -79,7 +95,7 @@ export const useSupabaseData = () => {
     mutationFn: async (routeId: string) => {
       console.log('Deleting route from Supabase:', routeId);
       
-      // First delete associated votes
+      // Delete associated votes
       const { error: votesError } = await supabase
         .from('votes')
         .delete()
@@ -90,7 +106,7 @@ export const useSupabaseData = () => {
         throw votesError;
       }
 
-      // Then delete associated comments
+      // Delete associated comments
       const { error: commentsError } = await supabase
         .from('comments')
         .delete()
@@ -101,7 +117,7 @@ export const useSupabaseData = () => {
         throw commentsError;
       }
 
-      // Finally delete the route
+      // Delete the route
       const { error } = await supabase
         .from('routes')
         .delete()
@@ -123,83 +139,38 @@ export const useSupabaseData = () => {
     },
   });
 
-  const voteOnRoute = useMutation({
-    mutationFn: async ({ routeId, isLike }: { routeId: string; isLike: boolean }) => {
-      console.log('Voting on route:', { routeId, isLike });
-      
-      // First get the current user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        throw new Error('User must be authenticated to vote');
-      }
+  return {
+    addRoute,
+    updateRoute,
+    deleteRoute
+  };
+};
 
-      const { data: existingVote, error: fetchError } = await supabase
-        .from('votes')
-        .select()
-        .eq('route_id', routeId)
-        .eq('user_id', userData.user.id)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Error fetching existing vote:', fetchError);
-        throw fetchError;
-      }
-
-      if (existingVote) {
-        const { error } = await supabase
-          .from('votes')
-          .delete()
-          .eq('id', existingVote.id);
-
-        if (error) {
-          console.error('Error deleting existing vote:', error);
-          throw error;
-        }
-      }
-
-      const { error: voteError } = await supabase
-        .from('votes')
-        .insert([{
-          route_id: routeId,
-          user_id: userData.user.id,
-          is_like: isLike,
-        }]);
-
-      if (voteError) {
-        console.error('Error inserting vote:', voteError);
-        throw voteError;
-      }
-
-      // Update route likes/dislikes count
-      const { data: voteCounts } = await supabase
-        .from('votes')
-        .select('is_like', { count: 'exact' })
-        .eq('route_id', routeId);
-
-      const likes = voteCounts?.filter(v => v.is_like).length || 0;
-      const dislikes = voteCounts?.filter(v => !v.is_like).length || 0;
-
-      const { error: updateError } = await supabase
+export const useSupabaseData = () => {
+  const { data: routes = [], isLoading: isLoadingRoutes } = useQuery({
+    queryKey: ['routes'],
+    queryFn: async () => {
+      console.log('Fetching routes from Supabase');
+      const { data, error } = await supabase
         .from('routes')
-        .update({ likes, dislikes })
-        .eq('id', routeId);
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (updateError) {
-        console.error('Error updating route votes:', updateError);
-        throw updateError;
+      if (error) {
+        console.error('Error fetching routes:', error);
+        throw error;
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['routes'] });
+      return data as BikeRoute[];
     },
   });
+
+  const routeOperations = useRoutes();
+  const voteOnRoute = useVotes();
 
   return {
     routes,
     isLoadingRoutes,
-    addRoute,
-    updateRoute,
-    deleteRoute,
+    ...routeOperations,
     voteOnRoute,
   };
 };

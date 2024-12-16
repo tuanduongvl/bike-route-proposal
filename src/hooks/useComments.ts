@@ -6,7 +6,6 @@ interface Comment {
   route_id: string;
   text: string;
   created_at: string;
-  user_id: string;
 }
 
 export const useComments = (routeId: string) => {
@@ -30,13 +29,12 @@ export const useComments = (routeId: string) => {
 
   const addComment = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
-      console.log('Adding comment:', { routeId, text });
+      console.log('Adding anonymous comment:', { routeId, text });
       const { data, error } = await supabase
         .from('comments')
         .insert([{
           route_id: routeId,
-          text,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          text
         }])
         .select()
         .single();
