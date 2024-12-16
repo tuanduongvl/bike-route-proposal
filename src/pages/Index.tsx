@@ -147,6 +147,18 @@ const Index = () => {
     setSelectedRoute(null);
   };
 
+  const handleFinishDrawing = () => {
+    if (tempCoordinates.length > 0) {
+      handleRouteComplete(tempCoordinates);
+    } else {
+      toast({
+        title: "No points drawn",
+        description: "Please draw at least one point before finishing.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
@@ -155,7 +167,9 @@ const Index = () => {
           <div className="lg:col-span-2">
             <RouteControls 
               isOperator={isOperator}
+              isDrawing={isDrawing}
               onStartDrawing={handleStartDrawing}
+              onFinishDrawing={handleFinishDrawing}
             />
             <MapComponent
               routes={routes}
