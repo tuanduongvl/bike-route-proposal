@@ -21,7 +21,7 @@ create policy "Routes are viewable by everyone"
 create policy "Authenticated users can create routes"
     on routes for insert
     to authenticated
-    with check (true);
+    with check (auth.uid() = user_id);
 
 create policy "Users can update their own routes"
     on routes for update
@@ -52,7 +52,7 @@ create policy "Votes are viewable by everyone"
 create policy "Authenticated users can create votes"
     on votes for insert
     to authenticated
-    with check (true);
+    with check (auth.uid() = user_id);
 
 create policy "Users can update their own votes"
     on votes for update
@@ -60,4 +60,34 @@ create policy "Users can update their own votes"
 
 create policy "Users can delete their own votes"
     on votes for delete
+    using (auth.uid() = user_id);
+
+-- Create comments table
+create table public.comments (
+    id uuid default gen_random_uuid() primary key,
+    route_id uuid references public.routes(id) on delete cascade,
+    user_id uuid references auth.users(id),
+    content text not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS for comments
+alter table public.comments enable row level security;
+
+-- Create policies for comments
+create policy "Comments are viewable by everyone"
+    on comments for select
+    using (true);
+
+create policy "Authenticated users can create comments"
+    on comments for insert
+    to authenticated
+    with check (auth.uid() = user_id);
+
+create policy "Users can update their own comments"
+    on comments for update
+    using (auth.uid() = user_id);
+
+create policy "Users can delete their own comments"
+    on comments for delete
     using (auth.uid() = user_id);
