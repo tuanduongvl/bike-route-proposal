@@ -5,7 +5,6 @@ import { BikeRoute } from '@/types/routes';
 export const useSupabaseData = () => {
   const queryClient = useQueryClient();
 
-  // Fetch all routes
   const { data: routes = [], isLoading: isLoadingRoutes } = useQuery({
     queryKey: ['routes'],
     queryFn: async () => {
@@ -23,7 +22,6 @@ export const useSupabaseData = () => {
     },
   });
 
-  // Add new route
   const addRoute = useMutation({
     mutationFn: async (route: Omit<BikeRoute, 'id' | 'likes' | 'dislikes'>) => {
       console.log('Adding new route to Supabase:', route);
@@ -51,7 +49,6 @@ export const useSupabaseData = () => {
     },
   });
 
-  // Update route
   const updateRoute = useMutation({
     mutationFn: async (route: BikeRoute) => {
       console.log('Updating route in Supabase:', route);
@@ -77,6 +74,30 @@ export const useSupabaseData = () => {
   const deleteRoute = useMutation({
     mutationFn: async (routeId: string) => {
       console.log('Deleting route from Supabase:', routeId);
+      
+      // First delete associated votes
+      const { error: votesError } = await supabase
+        .from('votes')
+        .delete()
+        .eq('route_id', routeId);
+
+      if (votesError) {
+        console.error('Error deleting associated votes:', votesError);
+        throw votesError;
+      }
+
+      // Then delete associated comments
+      const { error: commentsError } = await supabase
+        .from('comments')
+        .delete()
+        .eq('route_id', routeId);
+
+      if (commentsError) {
+        console.error('Error deleting associated comments:', commentsError);
+        throw commentsError;
+      }
+
+      // Finally delete the route
       const { error } = await supabase
         .from('routes')
         .delete()
@@ -86,13 +107,18 @@ export const useSupabaseData = () => {
         console.error('Error deleting route:', error);
         throw error;
       }
+
+      return routeId;
     },
-    onSuccess: () => {
+    onSuccess: (deletedRouteId) => {
+      console.log('Route successfully deleted:', deletedRouteId);
       queryClient.invalidateQueries({ queryKey: ['routes'] });
+    },
+    onError: (error) => {
+      console.error('Failed to delete route:', error);
     },
   });
 
-  // Vote on route
   const voteOnRoute = useMutation({
     mutationFn: async ({ routeId, isLike }: { routeId: string; isLike: boolean }) => {
       console.log('Voting on route:', { routeId, isLike });
