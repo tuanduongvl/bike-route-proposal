@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Polyline, useMap, useMapEvents } from "react-leaflet";
 import { BikeRoute } from "@/types/routes";
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import 'leaflet.gridlayer.googlemutant';
 
 interface MapComponentProps {
   routes: BikeRoute[];
@@ -8,6 +11,49 @@ interface MapComponentProps {
   isDrawing: boolean;
   onRouteComplete: (coordinates: [number, number][]) => void;
 }
+
+const GoogleLayer = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    console.log("Initializing Google Maps layer");
+    // @ts-ignore - the types for gridLayer.googleMutant are not available
+    const roads = L.gridLayer.googleMutant({
+      type: 'roadmap',
+      styles: [
+        {
+          featureType: "road",
+          elementType: "geometry",
+          stylers: [
+            { lightness: 100 },
+            { visibility: "simplified" }
+          ]
+        },
+        {
+          featureType: "road",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        },
+        {
+          featureType: "poi",
+          stylers: [
+            { visibility: "off" }
+          ]
+        }
+      ]
+    });
+    
+    roads.addTo(map);
+    
+    return () => {
+      map.removeLayer(roads);
+    };
+  }, [map]);
+
+  return null;
+};
 
 const RouteDrawer = ({ isDrawing, onRouteComplete }: {
   isDrawing: boolean;
@@ -34,10 +80,12 @@ const RouteDrawer = ({ isDrawing, onRouteComplete }: {
   return points.length > 0 ? (
     <Polyline
       positions={points}
-      dashArray={[10, 10]}
-      color="#4F7942"
-      weight={4}
-      opacity={0.8}
+      pathOptions={{
+        color: "#4F7942",
+        weight: 4,
+        opacity: 0.8,
+        dashArray: [10, 10]
+      }}
     />
   ) : null;
 };
@@ -51,11 +99,7 @@ export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          className="map-tiles"
-        />
+        <GoogleLayer />
         <RouteDrawer isDrawing={isDrawing} onRouteComplete={onRouteComplete} />
         {routes.map((route) => (
           <Polyline
