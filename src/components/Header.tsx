@@ -25,17 +25,36 @@ export const Header = () => {
   }, []);
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Auth error:', error);
+        
+        if (error.message.includes('provider is not enabled')) {
+          toast({
+            title: "Authentication Error",
+            description: "GitHub login is not enabled. Please contact the administrator to enable GitHub authentication in Supabase.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to login. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
       toast({
         title: "Error",
-        description: "Failed to login. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     }
