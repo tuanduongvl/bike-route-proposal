@@ -15,7 +15,10 @@ export const useSupabaseData = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching routes:', error);
+        throw error;
+      }
       return data as BikeRoute[];
     },
   });
@@ -30,7 +33,10 @@ export const useSupabaseData = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding route:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -49,7 +55,10 @@ export const useSupabaseData = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating route:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -66,7 +75,10 @@ export const useSupabaseData = () => {
         .delete()
         .eq('id', routeId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting route:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['routes'] });
@@ -84,7 +96,10 @@ export const useSupabaseData = () => {
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching existing vote:', fetchError);
+        throw fetchError;
+      }
 
       if (existingVote) {
         const { error } = await supabase
@@ -92,7 +107,10 @@ export const useSupabaseData = () => {
           .delete()
           .eq('id', existingVote.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error deleting existing vote:', error);
+          throw error;
+        }
       }
 
       const { error: voteError } = await supabase
@@ -103,7 +121,10 @@ export const useSupabaseData = () => {
           is_like: isLike,
         }]);
 
-      if (voteError) throw voteError;
+      if (voteError) {
+        console.error('Error inserting vote:', voteError);
+        throw voteError;
+      }
 
       // Update route likes/dislikes count
       const { data: voteCounts } = await supabase
@@ -119,7 +140,10 @@ export const useSupabaseData = () => {
         .update({ likes, dislikes })
         .eq('id', routeId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating route votes:', updateError);
+        throw updateError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['routes'] });
