@@ -6,6 +6,7 @@ interface Comment {
   route_id: string;
   text: string;
   created_at: string;
+  session_id?: string;
 }
 
 export const useComments = (routeId: string) => {
@@ -33,11 +34,17 @@ export const useComments = (routeId: string) => {
   const addComment = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
       console.log('Adding comment:', { routeId, text });
+      
+      // Use session ID for anonymous comments
+      const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
+      localStorage.setItem('sessionId', sessionId);
+
       const { data, error } = await supabase
         .from('comments')
         .insert([{
           route_id: routeId,
-          text
+          text,
+          session_id: sessionId
         }])
         .select()
         .single();
