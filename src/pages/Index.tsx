@@ -142,11 +142,11 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       <Header />
-      <div className="flex-1 flex">
-        <ResizablePanelGroup direction="horizontal" className="w-full">
-          <ResizablePanel defaultSize={75} minSize={30} className="h-full">
+      <main className="flex-1 flex overflow-hidden">
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel defaultSize={75} minSize={30}>
             <MapComponent
               routes={routes}
               selectedRoute={selectedRoute}
@@ -181,7 +181,7 @@ const Index = () => {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </main>
       <Footer />
 
       <RouteDialog
