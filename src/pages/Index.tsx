@@ -9,6 +9,7 @@ import RouteDialog from "@/components/RouteDialog";
 import RouteControls from "@/components/RouteControls";
 import { BikeRoute } from "@/types/routes";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import "leaflet/dist/leaflet.css";
 
 const Index = () => {
@@ -141,42 +142,45 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <RouteControls 
-              isOperator={isOperator}
-              isDrawing={isDrawing}
-              onStartDrawing={handleStartDrawing}
-              onFinishDrawing={handleFinishDrawing}
-            />
+      <div className="flex-grow flex">
+        <ResizablePanelGroup direction="horizontal" className="w-full">
+          <ResizablePanel defaultSize={75} minSize={30}>
             <MapComponent
               routes={routes}
               selectedRoute={selectedRoute}
               isDrawing={isDrawing}
               onRouteComplete={handleRouteComplete}
             />
-          </div>
-          <div className="space-y-8">
-            <BikeRouteList
-              routes={routes}
-              selectedRoute={selectedRoute}
-              onRouteSelect={handleRouteSelect}
-              onVote={handleVote}
-              isOperator={isOperator}
-              onEdit={handleEditRoute}
-              onDelete={handleDeleteRoute}
-            />
-            {selectedRoute && (
-              <RouteComments 
-                routeId={selectedRoute.id} 
-                routeName={selectedRoute.name} 
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={25} minSize={20} className="bg-white p-4 overflow-y-auto">
+            <div className="space-y-6">
+              <RouteControls 
+                isOperator={isOperator}
+                isDrawing={isDrawing}
+                onStartDrawing={handleStartDrawing}
+                onFinishDrawing={handleFinishDrawing}
               />
-            )}
-          </div>
-        </div>
+              <BikeRouteList
+                routes={routes}
+                selectedRoute={selectedRoute}
+                onRouteSelect={handleRouteSelect}
+                onVote={handleVote}
+                isOperator={isOperator}
+                onEdit={handleEditRoute}
+                onDelete={handleDeleteRoute}
+              />
+              {selectedRoute && (
+                <RouteComments 
+                  routeId={selectedRoute.id} 
+                  routeName={selectedRoute.name} 
+                />
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
       <Footer />
 

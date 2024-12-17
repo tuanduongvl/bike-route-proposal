@@ -17,11 +17,11 @@ const RouteControls = ({
   if (!isOperator) return null;
 
   return (
-    <div className="mb-4 flex gap-2">
+    <div className="flex gap-2">
       {!isDrawing ? (
         <Button 
           onClick={onStartDrawing}
-          className="flex items-center gap-2"
+          className="w-full flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add New Route
@@ -29,7 +29,7 @@ const RouteControls = ({
       ) : (
         <Button 
           onClick={onFinishDrawing}
-          className="flex items-center gap-2"
+          className="w-full flex items-center justify-center gap-2"
           variant="secondary"
         >
           <Check className="w-4 h-4" />
