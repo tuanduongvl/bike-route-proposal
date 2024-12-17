@@ -8,30 +8,58 @@ const useVotes = () => {
 
   return useMutation({
     mutationFn: async ({ routeId, isLike }: { routeId: string; isLike: boolean }) => {
-      console.log('Anonymous voting on route:', { routeId, isLike });
+      console.log('Voting on route:', { routeId, isLike });
       
-      // For anonymous voting, we'll just update the route's likes/dislikes directly
-      const { data: currentRoute } = await supabase
-        .from('routes')
-        .select('likes, dislikes')
-        .eq('id', routeId)
+      // First, check if the user has already voted
+      const { data: existingVote } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('route_id', routeId)
         .single();
 
-      if (!currentRoute) {
-        throw new Error('Route not found');
+      if (existingVote) {
+        // Update existing vote
+        const { error: updateError } = await supabase
+          .from('votes')
+          .update({ is_like: isLike })
+          .eq('id', existingVote.id);
+
+        if (updateError) {
+          console.error('Error updating vote:', updateError);
+          throw updateError;
+        }
+      } else {
+        // Create new vote
+        const { error: insertError } = await supabase
+          .from('votes')
+          .insert([{ 
+            route_id: routeId,
+            is_like: isLike
+          }]);
+
+        if (insertError) {
+          console.error('Error inserting vote:', insertError);
+          throw insertError;
+        }
       }
 
-      const { error: updateError } = await supabase
+      // Update route likes/dislikes counts
+      const { data: votes } = await supabase
+        .from('votes')
+        .select('is_like')
+        .eq('route_id', routeId);
+
+      const likes = votes?.filter(vote => vote.is_like).length || 0;
+      const dislikes = votes?.filter(vote => !vote.is_like).length || 0;
+
+      const { error: updateRouteError } = await supabase
         .from('routes')
-        .update({ 
-          likes: isLike ? (currentRoute.likes + 1) : currentRoute.likes,
-          dislikes: !isLike ? (currentRoute.dislikes + 1) : currentRoute.dislikes
-        })
+        .update({ likes, dislikes })
         .eq('id', routeId);
 
-      if (updateError) {
-        console.error('Error updating route votes:', updateError);
-        throw updateError;
+      if (updateRouteError) {
+        console.error('Error updating route counts:', updateRouteError);
+        throw updateRouteError;
       }
     },
     onSuccess: () => {

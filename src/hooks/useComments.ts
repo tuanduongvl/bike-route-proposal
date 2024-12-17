@@ -21,7 +21,10 @@ export const useComments = (routeId: string) => {
         .eq('route_id', routeId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching comments:', error);
+        throw error;
+      }
       return data as Comment[];
     },
     enabled: !!routeId,
@@ -29,7 +32,7 @@ export const useComments = (routeId: string) => {
 
   const addComment = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
-      console.log('Adding anonymous comment:', { routeId, text });
+      console.log('Adding comment:', { routeId, text });
       const { data, error } = await supabase
         .from('comments')
         .insert([{
@@ -39,7 +42,10 @@ export const useComments = (routeId: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding comment:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
