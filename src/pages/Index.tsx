@@ -144,9 +144,9 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex-grow flex">
+      <div className="flex-1 flex">
         <ResizablePanelGroup direction="horizontal" className="w-full">
-          <ResizablePanel defaultSize={75} minSize={30}>
+          <ResizablePanel defaultSize={75} minSize={30} className="h-full">
             <MapComponent
               routes={routes}
               selectedRoute={selectedRoute}

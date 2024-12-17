@@ -89,7 +89,7 @@ const RouteTooltip = ({ route }: { route: BikeRoute }) => {
 
 export const MapComponent = ({ routes, selectedRoute, isDrawing, onRouteComplete }: MapComponentProps) => {
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full relative">
       <MapContainer
         center={[37.5985, -122.3872]} // Millbrae, CA coordinates
         zoom={14}
