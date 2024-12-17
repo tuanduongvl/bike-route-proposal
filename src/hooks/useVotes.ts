@@ -8,10 +8,12 @@ export const useVotes = () => {
     mutationFn: async ({ routeId, isLike }: { routeId: string; isLike: boolean }) => {
       console.log('Attempting to vote on route:', { routeId, isLike });
       
-      // First, check if there's an existing vote from this session
+      // Get or create session ID for anonymous voting
       const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
       localStorage.setItem('sessionId', sessionId);
+      console.log('Using session ID:', sessionId);
 
+      // Check for existing vote with proper headers
       const { data: existingVote, error: voteCheckError } = await supabase
         .from('votes')
         .select('*')
