@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface Comment {
   id: string;
   route_id: string;
   text: string;
   created_at: string;
-  session_id?: string;
 }
 
 export const useComments = (routeId: string) => {
@@ -22,10 +21,7 @@ export const useComments = (routeId: string) => {
         .eq('route_id', routeId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching comments:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data as Comment[];
     },
     enabled: !!routeId,
@@ -33,26 +29,17 @@ export const useComments = (routeId: string) => {
 
   const addComment = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
-      console.log('Adding comment:', { routeId, text });
-      
-      // Use session ID for anonymous comments
-      const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
-      localStorage.setItem('sessionId', sessionId);
-
+      console.log('Adding anonymous comment:', { routeId, text });
       const { data, error } = await supabase
         .from('comments')
         .insert([{
           route_id: routeId,
-          text,
-          session_id: sessionId
+          text
         }])
         .select()
         .single();
 
-      if (error) {
-        console.error('Error adding comment:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {

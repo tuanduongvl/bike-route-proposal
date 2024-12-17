@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from "./ui/dialog";
 import { Label } from "./ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "./ui/use-toast";
 import { Github } from "lucide-react";
 
