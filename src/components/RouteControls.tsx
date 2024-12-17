@@ -1,20 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Check } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 
 interface RouteControlsProps {
   isOperator: boolean;
   isDrawing: boolean;
   onStartDrawing: () => void;
   onFinishDrawing: () => void;
+  user: User | null;
 }
 
 const RouteControls = ({ 
   isOperator, 
   isDrawing, 
   onStartDrawing, 
-  onFinishDrawing 
+  onFinishDrawing,
+  user
 }: RouteControlsProps) => {
-  if (!isOperator) return null;
+  if (!isOperator || !user) return null;
 
   return (
     <div className="flex gap-2">

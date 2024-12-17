@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import BikeRouteList from "@/components/BikeRouteList";
 import RouteComments from "@/components/RouteComments";
@@ -10,17 +10,20 @@ import RouteControls from "@/components/RouteControls";
 import { BikeRoute } from "@/types/routes";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 import "leaflet/dist/leaflet.css";
 
 const Index = () => {
   const [selectedRoute, setSelectedRoute] = useState<BikeRoute | null>(null);
-  const [isOperator] = useState(true); // Changed this line to default to true
+  const [isOperator] = useState(true);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showRouteDialog, setShowRouteDialog] = useState(false);
   const [editingRoute, setEditingRoute] = useState<BikeRoute | null>(null);
   const [newRouteName, setNewRouteName] = useState("");
   const [newRouteDescription, setNewRouteDescription] = useState("");
   const [tempCoordinates, setTempCoordinates] = useState<[number, number][]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   const {
@@ -137,6 +140,20 @@ const Index = () => {
     setSelectedRoute(route);
   };
 
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
   if (isLoadingRoutes) {
     return <div>Loading...</div>;
   }
@@ -162,6 +179,7 @@ const Index = () => {
                 isDrawing={isDrawing}
                 onStartDrawing={handleStartDrawing}
                 onFinishDrawing={handleFinishDrawing}
+                user={user}
               />
               <BikeRouteList
                 routes={routes}
