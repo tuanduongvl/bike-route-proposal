@@ -10,7 +10,7 @@ import RouteControls from "@/components/RouteControls";
 import { BikeRoute } from "@/types/routes";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import "leaflet/dist/leaflet.css";
 
